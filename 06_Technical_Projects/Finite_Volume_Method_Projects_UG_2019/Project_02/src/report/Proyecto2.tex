@@ -1,0 +1,378 @@
+\documentclass[letterpaper,11pt,final]{article}
+%----------------------------------------------------------------------------------
+\usepackage[utf8]{inputenc} % keyboard and accents
+\usepackage[english]{babel}
+\usepackage{graphicx}
+\usepackage{appendix}        % include figures
+\usepackage[T1]{fontenc}
+\usepackage{subcaption}      % for subfigures
+\usepackage{amsmath}
+\usepackage[T1]{fontenc}
+
+%----------------------------------------------------------------------------------
+
+% MARGINS
+\usepackage{vmargin}
+\setpapersize{A4}
+\setmargins{1.5cm}           % left margin
+{0cm}                        % top margin
+{18.4cm}                     % text width
+{23.42cm}                    % text height
+{50pt}                       % header height
+{1cm}                        % space between text and header
+{0pt}                        % footer height
+{2cm}                        % space between text and footer
+
+%----------------------------------------------------------------------------------
+
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[LO]{Finite Volume Introduction} 
+\fancyhead[RE]{\rightmark} 
+\fancyhead[RO,LE]{\thepage} % Page numbers on corners
+
+%----------------------------------------------------------------------------------
+\usepackage{listings,color}
+\definecolor{codegreen}{rgb}{0,0.5,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92} 
+
+\definecolor{backcolour}{RGB}{255,255,255}
+\definecolor{codegreen}{RGB}{0,255,0}
+\definecolor{blue}{RGB}{0,0,255}
+\definecolor{codegray}{RGB}{100,100,100}
+\usepackage{listings, color}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{blue},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+
+%-----------------------------------------------------------------------------------------------
+% TITLE AND AUTHORS
+\title{{\huge University of Guanajuato}\\ 
+Finite Volume Method (Project II)\\ }
+\author{García Sánchez Marco Antonio$^1$ \\$^1$División de Ingenierías, Campus Irapuato-Salamanca, Universidad de Guanajuato,\\Salamanca, Gto., Mexico\\ \\ Instructor: Damián Ascencio César Eduardo, Ph.D.\\ \\}
+\date{August 2019}
+\lstset{style=mystyle}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\newpage
+
+\begin{abstract}
+This work presents the finite volume method using two schemes for discretizing the governing equation in the advection-diffusion phenomenon.
+\end{abstract}
+
+\section{Introduction}
+Many physical problems can be modeled by analyzing the balance of two phenomena: advection and diffusion, which occur simultaneously. \\
+The first is related to the transport of species due to the presence of velocity fields, and the second is defined as the dispersion of the species involved along the physical domain of the problem.\\
+The advection-diffusion phenomenon is common in nature and in both industrial and engineering applications; it is generally also referred to as a transport problem.\\
+The finite volume method consists of dividing the domain into small finite-volume cells and applying the laws of energy conservation, relating the central node field with the neighboring nodes. Moreover, this method must include the effect of advective terms, which are present in any convective phenomenon in nature.\\
+In this project, the effects of advective terms are included, and two different schemes are proposed to solve this problem. We will use the forward discretization scheme and the central difference scheme to account for these effects.
+
+\section{Governing Equations}
+A schematic together with the problem data to be addressed is shown in Figure 0.
+
+\begin{center}
+\includegraphics[scale=0.4]{Figures/imagen-problema.JPG} \\
+\centering
+\label{etiqueta}
+Figure 0. Problem schematic.
+\end{center}
+
+The advection-diffusion governing equation from \cite{versteeg} is given by:
+\begin{equation}
+\label{eqn:balance}
+\frac{\partial}{\partial x}(\rho u\varphi)+
+\frac{\partial}{\partial y}(\rho v\varphi)=\Gamma\frac{\partial ^2}{\partial x^2}\varphi+\Gamma\frac{\partial ^2}{\partial y^2}\varphi
+\end{equation}
+
+\section{Discretization}
+Discretizing the governing equation yields:
+
+\begin{equation}
+\label{discretizacion}
+\begin{split}
+& A_{n}(\rho V_{n})\varphi_{n}+A_{e}(\rho U_{e})\varphi_{e}- A_{w}(\rho U_{w})\varphi_{w}-A_{s}(\rho V_{s})\varphi_{s}=\\ 
+& =A_{e}\Gamma_{e}\frac{d\varphi}{dx}|_{e}-A_{w}\Gamma_{w}\frac{d\varphi}{dx}|_{w}+A_{n}\Gamma_{n}\frac{d\varphi}{dy}|_{n}-A_{s}\Gamma_{s}\frac{d\varphi}{dy}|_{s}
+\end{split}
+\end{equation}
+
+Assuming:\\
+-Homogeneous mesh $dx=dy$ ; $A_{n}=A_{w}=A_{s}=A_{e}$\\
+-Also $F_{i}=(\varphi U)_{i}$ and $D_{i}=\frac{\Gamma_{i}}{dx}$\\
+From this, a discretized governing equation can be obtained:
+
+\begin{equation}
+\begin{split}
+& F_{n}\varphi_{n}+F_{e}\varphi_{e}-F_{w}\varphi_{w}-F_{s}\varphi_{s}=D_{e}(\varphi_{e}-\varphi_{p})+\\&+D_{n}(\varphi_{n}-\varphi_{p})-D_{w}(\varphi_{p}-\varphi_{w})-D_{s}(\varphi_{p}-\varphi_{s})
+\end{split}
+\end{equation}
+
+\subsection{Case 1: UDS}
+The forward difference scheme is presented as:
+$$u>0;\  \varphi_{e}=\varphi_{p}\ \text{and}\ \varphi_{w}=\varphi_{W}$$
+$$v>0;\ \varphi_{n}=\varphi_{p} \ \text{and}\ \varphi_{s}=\varphi_{S}$$
+
+Substituting the above into equation 3 and factoring, we find the equation for central nodes:
+
+\begin{equation}
+\begin{split}
+&\varphi_{p}(F_{e}+F_n+D_e+D_w)+\varphi_w(-F_w-D_w)+\\
+&+\varphi_s(-F_s-D_s)+\varphi_e(-D_e)+\varphi(-D_n)=0
+\end{split}
+\end{equation}
+
+\subsubsection{Discretization for corners}
+
+Node 1; using ghost nodes at W and S:
+\begin{equation}
+\begin{split}
+&\varphi_p(F_e+F_n+F_s+D_e+2D_w+2D_s+D_n)+\varphi_e(-D_e)\\&+\varphi_n(-D_n)=2C_w(F_w+D_w)+2C_s(F_s+D_s)
+\end{split}
+\end{equation}
+
+Node n; using ghost nodes at E and S:
+\begin{equation}
+\begin{split}
+&\varphi_p(F_e+F_n+F_s+2D_e+D_w+2D_s+D_n)+\varphi_w(-F_w\\&-D_w)+\varphi_n(-D_n)=2C_e(D_e)+2C_s(F_s+D_s)
+\end{split}
+\end{equation}
+
+Node $\gamma$ ; using ghost nodes at W and N:
+\begin{equation}
+\begin{split}
+&\varphi_p(F_e+F_n+F_w+D_e+2D_w+D_s+2D_n)+\varphi_e(-D_e)\\&+\varphi_s(-F_s-D_s)=2C_w(F_w+D_w)+2C_n(D_n)
+\end{split}
+\end{equation}
+
+Node $n^2$ ; using ghost nodes at E and N:
+\begin{equation}
+\begin{split}
+&\varphi_p(F_e+F_n+F_w+2D_e+D_w+D_s+2D_w)+\varphi_w(-D_w\\-&F_w)+\varphi_s(-F_s-D_s)=2C_n(D_n)+2C_e(D_e)
+\end{split}
+\end{equation}
+
+\subsubsection{Discretization for faces}
+
+South face: using ghost node at S
+\begin{equation}
+\begin{split}
+&\varphi_p(F_e+F_n+F_s+D_e+D_w+2D_s+D_n)+\varphi_w(-D_w\\&-F_w)+\varphi_n(-D_n)+\varphi_e(-D_e)=2C_s(F_s+D_s)
+\end{split}
+\end{equation}
+
+North face; using ghost node at N
+\begin{equation}
+\begin{split}
+&\varphi_p(F_e+F_n+F_s+D_e+D_w+D_s+2D_n)+\varphi_w(-D_w\\&-F_w)+\varphi_e(-D_e)+\varphi_s(-F_s-D_s)=2C_n(D_n)
+\end{split}
+\end{equation}
+
+West face; using ghost node at W
+\begin{equation}
+\begin{split}
+&\varphi_p(F_e+F_n+F_w+D_e+2D_w+D_s+D_n)+\varphi_e(-D_e)\\&+\varphi_s(-F_s-D_s)+\varphi_n(-D_n)=2C_w(F_w+D_w)
+\end{split}
+\end{equation}
+
+\subsection{Case 2: CDS}
+
+The central difference scheme is presented as:
+$$\varphi_{e}=\frac{\varphi_{p}+\varphi_E}{2}\ \text{and}\ \varphi_{w}=\frac{\varphi_{p}+\varphi_W}{2}$$
+$$\varphi_{n}=\frac{\varphi_{p}+\varphi_N}{2}\ \text{and}\ \varphi_{s}=\frac{\varphi_{p}+\varphi_S}{2}$$
+
+Substituting the above into equation 3 and factoring, we obtain the equation for central nodes:
+\begin{equation}
+\begin{split}
+&\varphi_{p}(F_{e}+F_n+D_e+D_w)+\varphi_w(-F_w-D_w)\\&+\varphi_s(-F_-D_s)+\varphi_e(-D_e)+\varphi(-D_n)=0
+\end{split}
+\end{equation}
+
+\subsubsection{Discretization for corners}
+
+Node 1; using ghost node at W and S:
+\begin{equation}
+\begin{split}
+&\varphi_p(\frac{1}{2}(F_e+F_n)+D_e+D_w+2D_s+2D_n)+\varphi_e(\frac{1}{2}F_e-D_e)\\&+\varphi_n(\frac{1}{2}F_n-D_n)=2C_w(\frac{1}{2}F_w+D_w)+2C_s(\frac{1}{2}F_s+D_s)
+\end{split}
+\end{equation}
+
+Node n; using ghost node at E and S:
+\begin{equation}
+\begin{split}
+&\varphi_p(\frac{1}{2}(F_e+F_n-F_s-F_w)+2D_e+D_w+2D_s+D_n)+\varphi_w(-\frac{1}{2}F_w\\&-D_w)+\varphi_n(\frac{1}{2}F_n-D_n)=2C_e(-\frac{1}{2}F_e+D_e)+2C_s(\frac{1}{2}F_s+D_s)
+\end{split}
+\end{equation}
+
+Node $\gamma$; using ghost node at W and N:
+\begin{equation}
+\begin{split}
+&\varphi_p(\frac{1}{2}(F_e-F_s)+D_e+2D_w+D_s+2D_n)+\varphi_e(\frac{1}{2}F_e-D_e)\\&+\varphi_s(-\frac{1}{2}F_s-D_s)=2C_w(\frac{1}{2}F_w+D_w)+2C_n(-\frac{1}{2}+D_n)
+\end{split}
+\end{equation}
+
+Node $n^2$; using ghost node at E and N:
+\begin{equation}
+\begin{split}
+&\varphi_p(\frac{1}{2}(F_w-F_s)+2D_e+D_w+D_s+2D_n)+\varphi_w(-D_w-\frac{1}{2}F_w)\\&+\varphi_s(-\frac{1}{2}F_s-D_s)=2C_n(-\frac{1}{2}F_n-D_n)+2C_e(-\frac{1}{2}F_e+D_e)
+\end{split}
+\end{equation}
+
+\subsubsection{Discretization for faces}
+
+South face: using ghost node at S:
+\begin{equation}
+\begin{split}
+&\varphi_p(\frac{1}{2}(F_e+F_n-F_w)+D_e+D_w+2D_s+D_n)+\varphi_w(-D_w-\frac{1}{2}F_w)\\&+\varphi_n(\frac{1}{2}F_n-D_n)+\varphi_e(\frac{1}{2}F_e-D_e)=2C_s(\frac{1}{2}F_s+D_s)
+\end{split}
+\end{equation}
+
+East face: using ghost node at E:
+\begin{equation}
+\begin{split}
+&\varphi_p(\frac{1}{2}(F_e+F_n-F_s)+D_e+D_w+D_s+2D_n)+\varphi_w(-D_w-\frac{1}{2}F_w)\\&+\varphi_e(\frac{1}{2}F_e-D_e)+\varphi_s(-\frac{1}{2}F_s-D_s)=2C_n(\frac{1}{2}F_w-D_n)
+\end{split}
+\end{equation}
+
+North face: using ghost node at N:
+\begin{equation}
+\begin{split}
+&\varphi_p(\frac{1}{2}(F_n-F_s-F_w)+D_e+D_w+D_s+2D_n)+\varphi_e(\frac{1}{2}F_e-D_e)\\&+\varphi_s(-\frac{1}{2}F_s-D_s)+\varphi_W(\frac{1}{2}F_w-D_w)=2C_w(-\frac{1}{2}F_w+D_w)
+\end{split}
+\end{equation}
+
+\section{Results and Mesh Independence}
+
+To solve the equations generated by the finite volume method, it is possible to use numerical methods such as Gauss-Seidel. For the proposed problem, a Python code was developed, shown in the Appendices, which solves the equations obtained. This also allows control over parameters such as the number of nodes, boundary conditions, and other constraints, making it possible to observe the variations along the fin according to the stipulated conditions.\\
+The properties and characteristics of the problem for computational solution are shown in Table 1.
+
+\begin{table}[!ht]
+\caption{Problem properties}
+\centering
+\begin{tabular}{lll}
+\hline
+\textbf{Data} & \textbf{Value} & Units\\
+\hline
+$C_{s}$ & 0 & $-$\\
+$C_{n}$ & 100 & $-$\\
+$C_{e}$ & 0 & $-$\\
+$C_{w}$ & 100 & $-$\\
+$\rho$ & 1  & $kgm^{-3}$ \\
+$\Gamma$ & 1.0 & $-$ \\
+L & 1 & m\\
+u & 2 & $ms^{-1}$ \\
+v & 2 & $ms^{-1}$ \\
+$E_{proposed}$ & 0.001 & $-$\\
+\hline     
+\end{tabular} 
+\end{table}
+
+\subsection{UDS Results}
+\subsubsection{$\Gamma=0$}
+By numerically solving the discretized equations, it was possible to construct a scheme where the distribution of the property $\varphi$ can be observed.
+
+\begin{figure}[!ht]
+    \centering
+    \begin{subfigure}[b]{.8\textwidth}
+        \includegraphics[width=\textwidth]{Figures/UDS_Gamma=0_dis.pdf}
+        \caption{$\varphi$ distribution}
+        \label{fig:gull}
+    \end{subfigure}
+    ~
+    \begin{subfigure}[b]{0.8\textwidth}
+        \includegraphics[width=\textwidth]{Figures/UDS_Gamma=0.pdf}
+        \caption{Mesh independence (false diffusion)}
+        \label{fig:tiger}
+    \end{subfigure}
+    \caption{UDS for $\Gamma=0$}
+    \label{fig:animals}
+\end{figure}
+
+Figure 1 shows the distribution and a mesh independence analysis. In 1(a), the solution is as expected due to symmetry, while in 1(b) it is possible to observe that mesh independence is satisfactory from 50x50 elements, with the solution trend stabilizing at 100x100 elements. For the solution of the problem, a mesh density of 50x50 elements was chosen.
+
+\subsubsection{$\Gamma=1$}
+Using the same mesh density, it is possible to obtain the distribution of $\varphi$ when $\Gamma=1$. Figure 2 shows the independence and property distribution for this case. From 2(b), it can be seen that a 10x10 mesh yields correct results, as the non-constant diagonal property has been plotted, indicating a good approximation to the physical result. Similar behavior is expected due to symmetry.
+
+\begin{figure}[!ht]
+    \centering
+    \begin{subfigure}[b]{.8\textwidth}
+        \includegraphics[width=\textwidth]{Figures/UDS_Gamma=1_Dis.pdf}
+        \caption{$\varphi$ distribution}
+        \label{fig:gull}
+    \end{subfigure}
+    ~
+    \begin{subfigure}[b]{0.8\textwidth}
+        \includegraphics[width=\textwidth]{Figures/UDS_Gamma=1.pdf}
+        \caption{Mesh independence}
+        \label{fig:tiger}
+    \end{subfigure}
+    \caption{UDS for $\Gamma=1$}
+    \label{fig:animals}
+\end{figure}
+
+\subsection{CDS Results}
+\subsubsection{$\Gamma=0$}
+For this scheme, the discretized equations yield a singular system (one diagonal element is zero), making it impossible to solve. Therefore, there is no numerical solution using the central difference scheme when $\Gamma=0$.
+
+\subsubsection{$\Gamma=1$}
+Using the equations of this case, Figure 3 was obtained, showing mesh independence and the property distribution. As can be seen from Figures 2 and 3, a very similar behavior is observed for the meshes when $\Gamma=1$, as expected, since both schemes should provide the same solution with an adequate mesh.
+
+\begin{figure}[!ht]
+    \centering
+    \begin{subfigure}[b]{.8\textwidth}
+        \includegraphics[width=\textwidth]{Figures/CDS_Gamma=1_Dis.pdf}
+        \caption{$\varphi$ distribution}
+        \label{fig:gull}
+    \end{subfigure}
+    ~
+    \begin{subfigure}[b]{0.8\textwidth}
+        \includegraphics[width=\textwidth]{Figures/CDS_Gamma=1.pdf}
+        \caption{Mesh independence}
+        \label{fig:tiger}
+    \end{subfigure}
+    \caption{CDS for $\Gamma=1$}
+    \label{fig:animals}
+\end{figure}
+
+\section{Conclusions}
+As observed in the results, the difference between methods lies in their accuracy. In central differences, it is crucial to know what happens in both directions of the node, while in forward differences, only the conditions of the node of interest and what is ahead matter.\\
+
+The forward difference method has the disadvantage of showing false diffusion results, but this issue can be corrected by increasing the number of nodes, thereby obtaining a relatively low Peclet number, which stabilizes the system solution.\\
+
+\pagebreak
+
+\addcontentsline{toc}{chapter}{Bibliography}
+\bibliographystyle{ieeetr}
+\bibliography{referencias.bib}
+
+
+\appendix
+%\chapter{\large{Anexo I: Codigos para la solución}}\\\
+\section*{Appendix I: Solution Codes}
+
+\lstinputlisting[language=Python]{Proyecto2.py}
+\lstinputlisting[language=Python]{Problema2.py}
+
+
+
+\end{document}
+
